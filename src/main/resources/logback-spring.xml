@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Color logging dependent render classes -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- Color log format -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <!-- ConsoleAppender: Output logs to console -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- RollingFileAppender: Records logs to a specified file, rolling over when certain
+    conditions are met -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>logs/novel.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- The name of the active file will change based on the fileNamePattern
+            value over time -->
+            <fileNamePattern>logs/debug.%d.%i.log</fileNamePattern>
+            <!-- The retention period for the generated log files is 30 days -->
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- maxFileSize: This is the size of the active file, default value is 10MB,
+                can be changed to 1KB for testing -->
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <!-- pattern node, used to set the log input format -->
+            <pattern>%d %p (%file:%line) - %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <!-- ROOT log level -->
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
+        </root>
+        <!-- Specify a certain package in the project; the log level for all log operations
+        under this package is DEBUG -->
+        <logger name="io.github.xxyopen" level="DEBUG" additivity="false">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
+        </logger>
+        <logger name="org.zalando.logbook" level="TRACE" additivity="false">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="prod">
+        <!-- ROOT log level -->
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+        </root>
+        <logger name="io.github.xxyopen" level="ERROR" additivity="false">
+            <appender-ref ref="FILE"/>
+        </logger>
+    </springProfile>
+</configuration>

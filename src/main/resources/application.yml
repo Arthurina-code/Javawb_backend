@@ -1,0 +1,301 @@
+#--------------------------General Configuration-------------------------
+spring:
+  application:
+    # Application name
+    name: novel
+  profiles:
+    # Activate specific configurations
+    active: dev
+  jackson:
+    generator:
+      # During JSON serialization, all Number types are returned as String to avoid precision loss in front-end data.
+      # Since JavaScript specifies that all numbers should be handled using 64-bit IEEE 754 floating-point values,
+      # some 64-bit integers cannot be accurately represented (with only 51 bits of precision).
+      write-numbers-as-strings: true
+  servlet:
+    multipart:
+      # Maximum file upload size
+      max-file-size: 5MB
+  # Enable virtual threads
+  threads:
+    virtual:
+      enabled: true
+  # Initialize the schema history table
+  flyway:
+    baseline-on-migrate: true
+server:
+  # Port number
+  port: 8888
+
+--- #---------------------Database Configuration---------------------------
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/novel?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: test123456
+  # ShardingSphere-JDBC Configuration
+  # The configuration is the only part that interacts with the application developer in ShardingSphere-JDBC,
+  # and it quickly and clearly defines the features provided by ShardingSphere-JDBC.
+  shardingsphere:
+    # Enable sharding
+    enabled: false
+    props:
+      # Show SQL in logs
+      sql-show: true
+    # Mode configuration
+    mode:
+      # Standalone mode
+      type: Standalone
+      # Metadata persistence
+      repository:
+        # Database persistence
+        type: JDBC
+        props:
+          # Metadata storage type
+          provider: H2
+          jdbc_url: jdbc:h2:./.h2/shardingsphere
+
+    # Data source configuration
+    datasource:
+      names: ds_0
+      ds_0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driverClassName: com.mysql.cj.jdbc.Driver
+        jdbcUrl: jdbc:mysql://localhost:3306/novel_test?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+        username: root
+        password: test123456
+    # Rules configuration
+    rules:
+      # Data sharding
+      sharding:
+        tables:
+          # book_content table
+          book_content:
+            # Data nodes
+            actual-data-nodes: ds_$->{0}.book_content$->{0..9}
+            # Sharding strategy
+            table-strategy:
+              standard:
+                # Sharding column name
+                sharding-column: chapter_id
+                # Sharding algorithm name
+                sharding-algorithm-name: bookContentSharding
+        sharding-algorithms:
+          bookContentSharding:
+            # Inline sharding algorithm using Groovy expressions for sharding support in SQL statements
+            type: INLINE
+            props:
+              # Sharding algorithm expression
+              algorithm-expression: book_content$->{chapter_id % 10}
+
+--- #---------------------Middleware Configuration---------------------------
+spring:
+  data:
+    # Redis configuration
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: test123456
+
+  # Elasticsearch configuration
+  elasticsearch:
+    # Whether to enable Elasticsearch search engine: true-enable, false-disable
+    enabled: false
+    uris:
+      - https://my-deployment-ce7ca3.es.us-central1.gcp.cloud.es.io:9243
+    username: elastic
+    password: qTjgYVKSuExX6tWAsDuvuvwl
+    # Set SSL verification mode, "none" means no verification, trusting all SSL certificates.
+  #    ssl:
+  #      verification-mode: none
+
+  # Spring AMQP configuration
+  amqp:
+    # Whether to enable Spring AMQP: true-enable, false-disable
+    enabled: false
+  # RabbitMQ configuration
+  rabbitmq:
+    addresses: "amqp://guest:guest@47.106.243.172"
+    virtual-host: novel
+    template:
+      retry:
+        # Enable retry
+        enabled: true
+        # Maximum retry attempts
+        max-attempts: 3
+        # Duration between the first and second retries
+        initial-interval: "3s"
+
+# XXL-JOB configuration
+xxl:
+  job:
+    # Whether to enable XXL-JOB: true-enable, false-disable
+    enabled: false
+    admin:
+      ### Root address of the scheduling center [optional]: if multiple addresses exist for the scheduling center, separate with commas. The executor will use this address for "executor heartbeat registration" and "task result callback"; if empty, automatic registration will be disabled;
+      addresses: http://127.0.0.1:8080/xxl-job-admin
+    executor:
+      ### Executor AppName [optional]: Heartbeat registration group basis for executor; if empty, automatic registration will be disabled
+      appname: xxl-job-executor-novel
+      ### Executor log file storage disk path [optional]: must have read/write permissions; if empty, default path will be used;
+      logpath: logs/xxl-job/jobhandler
+    ### XXL-Job, access token
+    accessToken: 123
+
+--- #----------------------Security Configuration----------------------------
+spring:
+  # Spring Boot application management and monitoring
+  boot:
+    admin:
+      client:
+        # Whether to enable Spring Boot Admin client
+        enabled: false
+        # Spring Boot Admin server registration URL
+        url: http://localhost:8080
+        # Spring Boot Admin server authentication username
+        username: novel
+        # Spring Boot Admin server authentication password
+        password: novel
+        instance:
+          metadata:
+            # SBA Client
+            user.name: ${spring.security.user.name}
+            user.password: ${spring.security.user.password}
+  security:
+    user:
+      name: ENDPOINT_ADMIN
+      password: ENDPOINT_ADMIN
+      roles: ENDPOINT_ADMIN
+
+# Actuator endpoint management
+management:
+  # Endpoint exposure configuration
+  endpoints:
+    # Web endpoints exposed through HTTP
+    web:
+      exposure:
+        # Expose all web endpoints
+        include: "*"
+  # Enable configuration for endpoints
+  endpoint:
+    logfile:
+      # Enable endpoint to return log file content
+      enabled: true
+      # External log file path
+      external-file: logs/novel.log
+  info:
+    env:
+      # Expose all environment properties starting with info.
+      enabled: true
+  health:
+    rabbit:
+      # Disable RabbitMQ health check
+      enabled: false
+    elasticsearch:
+      # Disable Elasticsearch health check
+      enabled: false
+    mail:
+      # Disable mail health check
+      enabled: false
+
+--- #--------------------API Documentation Configuration---------------------------
+springdoc:
+  api-docs:
+    enabled: false
+
+--- #----------------------Email Configuration-----------------------------
+# Email server
+spring:
+  mail:
+    host: smtp.163.com
+    # Sender nickname
+    nickname: xxyopen
+    # Email account
+    username: xxx@163.com
+    # Email third-party authorization code
+    password: xxx
+    # Encoding type
+    default-encoding: UTF-8
+    port: 465
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+
+--- #----------------------Logbook Configuration-----------------------------
+logbook:
+  format:
+    # Output format
+    style: http
+  obfuscate:
+    headers:
+      # Obfuscate Authorization header
+      - Authorization
+    parameters:
+      # Obfuscate password parameter
+      - password
+
+--- #---------------------Custom Configuration----------------------------
+novel:
+  # Cross-origin configuration
+  cors:
+    # Allowed origins
+    allow-origins:
+      - http://localhost:1024
+      - http://localhost:8080
+  # JWT secret key
+  jwt:
+    secret: E66559580A1ADF48CDD928516062F12E
+  # XSS filter configuration
+  xss:
+    # Filter switch
+    enabled: true
+    # Excluded URLs
+    excludes:
+      - /system/notice/*
+  file:
+    # File upload configuration
+    upload:
+      # Upload path
+      path: /Users/xiongxiaoyang/upload
+
+
+--- #------------------- dev Specific Configuration---------------------------
+spring:
+  config:
+    activate:
+      on-profile: dev
+# Enable SpringDoc API documentation
+springdoc:
+  api-docs:
+    enabled: true
+# Show property values for /env endpoint
+management:
+  endpoint:
+    env:
+      show-values: when_authorized
+
+--- #------------------- test Specific Configuration--------------------------
+spring:
+  config:
+    activate:
+      on-profile: test
+
+--- #-------------------- prod Specific Configuration-------------------------
+spring:
+  config:
+    activate:
+      on-profile: prod
+  data:
+    # Redis configuration
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password:
