@@ -1,4 +1,4 @@
-# Project Name: Novel Platform
+# Online Book Reading Web-frondend
 
 ## Project Overview
 This is a comprehensive backend system for a novel platform designed for writers, readers, and platform administrators. The system offers a variety of features, including novel management, user management, and commenting and feedback systems. It also supports advanced search and recommendation features using both the database and Elasticsearch.
