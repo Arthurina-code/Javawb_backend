@@ -154,7 +154,3 @@ The system uses a **separation of concerns** architecture:
 This architecture ensures the system is efficient, stable, and scalable.
 
 ---
-
-## Conclusion
-
-This Novel Platform integrates modern technologies like Spring Boot, MyBatis, Elasticsearch, Redis, and RabbitMQ to provide high-performance functionality for managing novels, users, feedback, and recommendations. The system is designed to handle high traffic efficiently while maintaining a smooth and responsive user experience.
